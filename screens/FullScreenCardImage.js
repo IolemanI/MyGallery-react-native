@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import { StyleSheet, Image, View, TouchableHighlight} from 'react-native';
 import { Container, Header, Content, Card, CardItem, Thumbnail, Text, Button, Icon, Left, Body, Right, Title } from 'native-base';
+import { connect } from 'react-redux';
 
-/* eslint-disable */
-export default class CardImage extends Component {
+
+class FullScreenCardImage extends Component {
   constructor (props) {
     super(props);
     this.state = {
@@ -15,29 +16,11 @@ export default class CardImage extends Component {
     header: null,
   }
 
-  async componentWillMount() {
-    await Expo.Font.loadAsync({
-      Roboto: require("native-base/Fonts/Roboto.ttf"),
-      Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
-    });
-    this.setState({ isReady: true });
-  }
-  _getImageUrl=()=>{
-    console.log(params.photosList[params.id].image_url);
-    return params.photosList[params.id].image_url;
-  }
-  testPress=()=>{
-    console.log(params.id);
-
-  }
-
-
   render() {
-    // if (!this.state.isReady) {
-    //   return <Expo.AppLoading/>;
-    // }
+
     const { params } = this.props.navigation.state;
     const {goBack} = this.props.navigation;
+    const id = params.id;
     return (
       <Container >
         <Header  style={styles.header}>
@@ -47,35 +30,35 @@ export default class CardImage extends Component {
             </Button>
           </Left>
           <Body>
-            <Title style={styles.title}>{params.author}</Title>
+            <Title style={styles.title}>{this.props.imgStore[id].user.fullname}</Title>
           </Body>
           <Right>
           </Right>
         </Header>
         <Content>
           <View style={styles.headerBlock}>
-            <Thumbnail source={{uri:params.authorIcon}} style={styles.userIcon}/>
+            <Thumbnail source={{uri:this.props.imgStore[id].user.userpic_url}} style={styles.userIcon}/>
             <View style={styles.headerText}>
-              <Text>{params.author}</Text>
-              <Text note>{params.imgName}</Text>
+              <Text>{this.props.imgStore[id].user.fullname}</Text>
+              <Text note>{this.props.imgStore[id].name}</Text>
             </View>
             <Text style={styles.textTime}>11h ago</Text>
           </View>
 
           <View style={styles.imageView}>
-            <Image source={{uri:params.url}} style={styles.image}/>
+            <Image source={{uri:this.props.imgStore[id].image_url}} style={styles.image}/>
           </View>
 
           <View style={styles.btnBox}>
             <Button transparent style={styles.btnRating}
             onPress={this.testPress}>
               <Icon active name="thumbs-up" style={styles.btnIcon}/>
-              <Text style={styles.btnText}>Rating {params.rating}</Text>
+              <Text style={styles.btnText}>Rating {this.props.imgStore[id].rating}</Text>
             </Button>
 
             <Button transparent style={styles.btnComments}>
               <Icon active name="chatbubbles" style={styles.btnIcon}/>
-              <Text style={styles.btnText}>{params.comments} Comments</Text>
+              <Text style={styles.btnText}>{this.props.imgStore[id].comments_count} Comments</Text>
             </Button>
           </View>
         </Content>
@@ -136,3 +119,12 @@ const styles = StyleSheet.create({
   },
 
 });
+
+
+export default connect(
+  state =>({
+    imgStore: state,
+  }),
+  dispatch =>({}),
+
+)(FullScreenCardImage);

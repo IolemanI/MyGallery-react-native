@@ -1,13 +1,15 @@
 import React, { Component } from 'react';
-import { StyleSheet, NativeModules, Image, Text, View, StatusBar, ToastAndroid, TouchableOpacity} from 'react-native';
-import CardImage from './CardImage.js';
-import {Footer, FooterTab, Container, Header, Content, List, ListItem, Left, Right, Button, Icon, Body, Title, Spinner, Toast} from 'native-base';
-import {Router, Scene, Actions} from 'react-native-router-flux';
-/* eslint-disable */
+import { StyleSheet, NativeModules, Image, Text, View, ToastAndroid, StatusBar, TouchableOpacity, ActivityIndicator} from 'react-native';
+import {Footer, FooterTab, Container, Header, Content, Left, Right, Button, Icon, Body, Title} from 'native-base';
+import { StackNavigator } from 'react-navigation';
+import { connect } from 'react-redux';
+
+import CardImage from '../components/CardImage.js';
+
 
 const { StatusBarManager } = NativeModules;
 
-export default class App extends React.Component {
+class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -21,29 +23,27 @@ export default class App extends React.Component {
       isReady:false,
     };
   }
+  static navigationOptions = {
+    header: null,
+  };
 
   renderImageCards=(i, data)=>{
-    return (<TouchableOpacity activeOpacity={1.0} key={i} onPress={(event)=>this.onImagePress(data, i)}>
-      <CardImage id={i} url={data.photos[i].image_url}
-      authorIcon={data.photos[i].user.userpic_url}
-      author={data.photos[i].user.fullname}
-      name={data.photos[i].name}
-      rating={data.photos[i].rating}
-      comments={data.photos[i].comments_count}/>
+    const { navigate } = this.props.navigation;
+    var url = data.image_url;
+    var authorIcon = data.user.userpic_url;
+    var author = data.user.fullname;
+    var imgName = data.name;
+    var rating = data.rating;
+    var comments = data.comments_count;
+
+    return (<TouchableOpacity style={styles.imageCard} activeOpacity={1.0} key={i} onPress={()=>navigate('FullScreenCardImage', {id:i})}>
+      <CardImage id={i} url={url}
+      authorIcon={authorIcon}
+      author={author}
+      name={imgName}
+      rating={rating}
+      comments={comments}/>
     </TouchableOpacity>);
-  }
-
-  onImagePress=(data, i)=>{
-    console.log('image key is: '+i);
-
-    Actions.fs_card_image({
-      url:data.photos[i].image_url,
-      authorIcon:data.photos[i].user.userpic_url,
-      author:data.photos[i].user.fullname,
-      imgName:data.photos[i].name,
-      rating:data.photos[i].rating,
-      comments:data.photos[i].comments_count,
-    });
   }
 
   checkPage=(page)=>{
@@ -71,8 +71,7 @@ export default class App extends React.Component {
   loadData=(page)=>{
     console.log('начинается загрузка: '+page);
     var url = 'https://api.500px.com/v1/photos?feature=popular&consumer_key=wB4ozJxTijCwNuggJvPGtBGCRqaZVcF6jsrzUadF&page='+page;
-    fetch(url)
-    .then((response) => {
+    fetch(url).then((response) => {
       if(!response.ok) alarm('Download error!');
       return response;
     }).then((response) => response.json())
@@ -82,11 +81,14 @@ export default class App extends React.Component {
         var photos = new Array();
         photos.push(data.photos);
 
+
         for (var i = 0; i < data.photos.length; i++) {
+          this.props.addPhotos(data.photos[i]);
           imageCards.push(
-            this.renderImageCards(i, data)
+            this.renderImageCards(i, data.photos[i])
           );
         }
+
         this.setState({
           imageCards: imageCards,
           receivedData:data,
@@ -94,10 +96,7 @@ export default class App extends React.Component {
           photos:photos,
         });
 
-        // console.log(this.state.photos);
-
         console.log('загружено: '+data.current_page);
-        this.shouldComponentUpdate(this.state);
     })
   }
 
@@ -116,28 +115,33 @@ export default class App extends React.Component {
     this.loadData(this.state.currentPage);
   }
 
-  shouldComponentUpdate(state){
-    // console.log(state.receivedData);
-    if (!state.receivedData) {
-      return true;
-    }
-
-    return false;
-  }
-
-
 
   render = () => {
     let display;
+    let isDisabled;
+    let page = 'page '+this.state.currentPage;
+
     if (!this.state.isReady) return <Expo.AppLoading />;
 
-    if (!this.state.receivedData) display = (<Spinner color='blue'  style={styles.spinner} />);
+    if (!this.state.receivedData){
+      isDisabled = true;
+      display =  (
+          <View style={styles.spinnerView}>
+            <ActivityIndicator color='#90a4ae' size="large" />
+          </View>
+        );
+    }
     else {
       // ToastAndroid.show('Page: '+this.state.receivedData.current_page, ToastAndroid.SHORT)
-      display = this.state.imageCards;
+      isDisabled = false;
+
+      display =  (
+        <Content>
+          {this.state.imageCards}
+        </Content>
+        );
     }
 
-    let page = 'page '+this.state.currentPage;
 
     return (
       <Container >
@@ -154,27 +158,21 @@ export default class App extends React.Component {
             <Text style={styles.headerText}>{page}</Text>
           </Right>
         </Header>
-        <Content>
-          {display}
-        </Content>
+        {display}
         <Footer>
           <FooterTab style={styles.footerBtns}>
-            <Button onPress={this.onPressPreviousPage} >
+            <Button disabled = {isDisabled} onPress={this.onPressPreviousPage} >
               <Text style={styles.footerText}>Previous page</Text>
             </Button>
-            <Button onPress={this.onPressNextPage} >
+            <Button disabled = {isDisabled} onPress={this.onPressNextPage} >
               <Text style={styles.footerText}>Next page</Text>
             </Button>
           </FooterTab>
         </Footer>
       </Container>
     );
-    // <TouchableHighlight onPress={this._onPressImage}>
-    //    <Image source={{uri:'https://drscdn.500px.org/photo/231328407/q%3D50_w%3D140_h%3D140/v2?client_application_id=27071&webp=true&v=0&sig=956ada6374f32b672ee42f988942caa23f2abcdfa5fe38a9b237393ace47d865'}} style={{height: 300, width: null, flex: 1}}/>
-    // </TouchableHighlight>
   }
 }
-
 const styles = StyleSheet.create({
   container: {
     padding: 20,
@@ -194,10 +192,10 @@ const styles = StyleSheet.create({
     color:'#fff',
   },
   header:{
-    backgroundColor:'#7f8c8d',
+    backgroundColor:'#546e7a',
   },
   footerBtns:{
-    backgroundColor:'#7f8c8d'
+    backgroundColor:'#546e7a'
   },
   content:{
     flex:1,
@@ -205,13 +203,23 @@ const styles = StyleSheet.create({
     alignItems:'center',
     justifyContent:'center'
   },
-  spinner:{
+  spinnerView:{
     flex:1,
     flexDirection:'column',
     alignItems:'center',
     justifyContent:'center'
   },
-  statusBar:{
-    backgroundColor:"#7f8c8d",
-  }
 });
+
+
+
+export default connect(
+  state =>({
+    imgStore: state,
+  }),
+  dispatch =>({
+    addPhotos: (photos)=>{
+      dispatch({type: 'PHOTOS_LIST', payload: photos});
+    }
+  }),
+)(App);
