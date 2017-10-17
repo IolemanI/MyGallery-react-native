@@ -1,15 +1,17 @@
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import { StyleSheet, NativeModules, Image, Text, View, ToastAndroid, StatusBar, TouchableOpacity, ActivityIndicator} from 'react-native';
 import {Footer, FooterTab, Container, Header, Content, Left, Right, Button, Icon, Body, Title} from 'native-base';
 import { StackNavigator } from 'react-navigation';
 import { connect } from 'react-redux';
+import * as homeActions from '../actions/HomeActions.js';
+import { bindActionCreators } from 'redux';
 
 import CardImage from '../components/CardImage.js';
 
 
 const { StatusBarManager } = NativeModules;
 
-class App extends React.Component {
+class Home extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -70,20 +72,20 @@ class App extends React.Component {
 
   loadData=(page)=>{
     console.log('начинается загрузка: '+page);
+    this.props.homeActions.resetPhotos();
     var url = 'https://api.500px.com/v1/photos?feature=popular&consumer_key=wB4ozJxTijCwNuggJvPGtBGCRqaZVcF6jsrzUadF&page='+page;
     fetch(url).then((response) => {
       if(!response.ok) alarm('Download error!');
       return response;
     }).then((response) => response.json())
     .then((data) => {
-        // var data = JSON.stringify(responseData);
         var imageCards = new Array();
         var photos = new Array();
         photos.push(data.photos);
 
 
         for (var i = 0; i < data.photos.length; i++) {
-          this.props.addPhotos(data.photos[i]);
+          this.props.homeActions.addPhotos(data.photos[i]);
           imageCards.push(
             this.renderImageCards(i, data.photos[i])
           );
@@ -100,6 +102,38 @@ class App extends React.Component {
     })
   }
 
+  // async loadData(page) {
+  //     console.log('начинается загрузка: '+page);
+  //     var url = 'https://api.500px.com/v1/photos?feature=popular&consumer_key=wB4ozJxTijCwNuggJvPGtBGCRqaZVcF6jsrzUadF&page='+page;
+  //
+  //     let response = await fetch(url);
+  //     if(!response.ok){
+  //       alarm('Download error!');
+  //       return response;
+  //     }
+  //
+  //     let data = await response.json();
+  //     var imageCards = new Array();
+  //     var photos = new Array();
+  //     photos.push(data.photos);
+  //
+  //     for (var i = 0; i < data.photos.length; i++) {
+  //       this.props.homeActions.addPhotos(data.photos[i]);
+  //       imageCards.push(
+  //         this.renderImageCards(i, data.photos[i])
+  //       );
+  //     }
+  //
+  //     this.setState({
+  //       imageCards: imageCards,
+  //       receivedData:data,
+  //       currentPage:data.current_page,
+  //       photos:photos,
+  //     });
+  //
+  //     console.log('загружено: '+data.current_page);
+  //  }
+
   async componentWillMount() {
     await Expo.Font.loadAsync({
       Roboto: require("native-base/Fonts/Roboto.ttf"),
@@ -111,7 +145,6 @@ class App extends React.Component {
   }
   componentDidMount = () => {
     StatusBar.setHidden(true);
-    console.log('componentDidMount');
     this.loadData(this.state.currentPage);
   }
 
@@ -212,14 +245,20 @@ const styles = StyleSheet.create({
 });
 
 
+function mapStateToProps(state){
+  return {
+    imgStore: state.photoReducer,  //?
+  };
+}
 
-export default connect(
-  state =>({
-    imgStore: state,
-  }),
-  dispatch =>({
-    addPhotos: (photos)=>{
-      dispatch({type: 'PHOTOS_LIST', payload: photos});
-    }
-  }),
-)(App);
+function mapDispatchToProps(dispatch) {
+  return {
+    homeActions: bindActionCreators(homeActions, dispatch),
+  };
+}
+
+Home.propTypes = {
+  homeActions: PropTypes.object.isRequired
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Home);

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, PropTypes, } from 'react';
 import { StyleSheet, Image, View, TouchableHighlight} from 'react-native';
 import { Container, Header, Content, Card, CardItem, Thumbnail, Text, Button, Icon, Left, Body, Right } from 'native-base';
 
@@ -111,3 +111,13 @@ export default class CardImage extends Component {
     },
 
   });
+
+
+  CardImage.propTypes = {
+    author: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    url: PropTypes.string.isRequired,
+    authorIcon: PropTypes.string.isRequired,
+    rating: PropTypes.number.isRequired,
+    comments: PropTypes.number.isRequired
+  };

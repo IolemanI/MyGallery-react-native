@@ -123,8 +123,6 @@ const styles = StyleSheet.create({
 
 export default connect(
   state =>({
-    imgStore: state,
-  }),
-  dispatch =>({}),
-
+    imgStore: state.photoReducer,
+  })
 )(FullScreenCardImage);

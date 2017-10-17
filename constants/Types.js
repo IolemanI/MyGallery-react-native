@@ -1,0 +1,2 @@
+export const PHOTOS_LIST = 'PHOTOS_LIST';
+export const RESET_PHOTOS_LIST = 'RESET_PHOTOS_LIST';
