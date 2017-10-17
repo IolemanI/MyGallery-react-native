@@ -15,13 +15,10 @@ class Home extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      showText: true,
       receivedData: false,
       imageCards: [],
       pageToDownload: 1,
       currentPage: 1,
-      showToast: false,
-      photos: [],
       isReady:false,
     };
   }
@@ -57,16 +54,12 @@ class Home extends React.Component {
   }
   onPressPreviousPage=()=>{
     var prevPage = this.state.pageToDownload-1;
-    console.log('to download'+prevPage);
-    if (prevPage<1) {
-      return;
-    }
+    if (prevPage<1) return;
     this.loadData(this.checkPage(prevPage));
 
   }
   onPressNextPage=()=>{
     var nextPage = this.state.pageToDownload+1;
-    console.log('to download'+nextPage);
     this.loadData(this.checkPage(nextPage));
   }
 
@@ -80,9 +73,6 @@ class Home extends React.Component {
     }).then((response) => response.json())
     .then((data) => {
         var imageCards = new Array();
-        var photos = new Array();
-        photos.push(data.photos);
-
 
         for (var i = 0; i < data.photos.length; i++) {
           this.props.homeActions.addPhotos(data.photos[i]);
@@ -95,44 +85,11 @@ class Home extends React.Component {
           imageCards: imageCards,
           receivedData:data,
           currentPage:data.current_page,
-          photos:photos,
         });
 
         console.log('загружено: '+data.current_page);
     })
   }
-
-  // async loadData(page) {
-  //     console.log('начинается загрузка: '+page);
-  //     var url = 'https://api.500px.com/v1/photos?feature=popular&consumer_key=wB4ozJxTijCwNuggJvPGtBGCRqaZVcF6jsrzUadF&page='+page;
-  //
-  //     let response = await fetch(url);
-  //     if(!response.ok){
-  //       alarm('Download error!');
-  //       return response;
-  //     }
-  //
-  //     let data = await response.json();
-  //     var imageCards = new Array();
-  //     var photos = new Array();
-  //     photos.push(data.photos);
-  //
-  //     for (var i = 0; i < data.photos.length; i++) {
-  //       this.props.homeActions.addPhotos(data.photos[i]);
-  //       imageCards.push(
-  //         this.renderImageCards(i, data.photos[i])
-  //       );
-  //     }
-  //
-  //     this.setState({
-  //       imageCards: imageCards,
-  //       receivedData:data,
-  //       currentPage:data.current_page,
-  //       photos:photos,
-  //     });
-  //
-  //     console.log('загружено: '+data.current_page);
-  //  }
 
   async componentWillMount() {
     await Expo.Font.loadAsync({
@@ -247,7 +204,7 @@ const styles = StyleSheet.create({
 
 function mapStateToProps(state){
   return {
-    imgStore: state.photoReducer,  //?
+    imgStore: state.photoReducer,
   };
 }
 
@@ -255,10 +212,6 @@ function mapDispatchToProps(dispatch) {
   return {
     homeActions: bindActionCreators(homeActions, dispatch),
   };
-}
-
-Home.propTypes = {
-  homeActions: PropTypes.object.isRequired
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Home);
